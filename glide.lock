@@ -1,0 +1,6 @@
+hash: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+updated: 2015-12-11T21:43:10.853622034-08:00
+imports:
+- name: github.com/Chatterbox-IRC/pkg
+  version: 42553e984f4153b46b3bb1df3d3cde5168ca6837
+devImports: []

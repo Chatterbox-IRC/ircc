@@ -7,7 +7,7 @@ import (
 
 	"github.com/chatterbox-irc/chatterbox/ircc/events"
 	"github.com/chatterbox-irc/chatterbox/ircc/irc"
-	"github.com/chatterbox-irc/chatterbox/pkg/validate"
+	"github.com/chatterbox-irc/pkg/validate"
 )
 
 // Parse parsses the input string and runs the command
