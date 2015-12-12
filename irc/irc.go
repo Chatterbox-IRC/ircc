@@ -14,33 +14,25 @@ var ErrInvalidConnection = errors.New("nick, user, and server must be set")
 
 // IRC is a object holding irc connection information
 type IRC struct {
-	Nick       string
-	User       string
 	UseTLS     bool
 	Server     string
-	ServerPass string
 	Output     io.Writer
 	connection net.Conn
-	connected  bool
 	timeout    time.Duration
 	readChan   chan bool
 }
 
 // New creates a new irc connection
-func New(nick, user, server, serverPass string, useTLS bool, output io.Writer, timeout time.Duration) (*IRC, error) {
-	if nick == "" || user == "" || server == "" {
+func New(server string, useTLS bool, output io.Writer, timeout time.Duration) (*IRC, error) {
+	if server == "" {
 		return nil, ErrInvalidConnection
 	}
 
 	return &IRC{
-		Nick:       nick,
-		User:       user,
 		UseTLS:     useTLS,
 		Server:     server,
-		ServerPass: serverPass,
 		Output:     output,
 		connection: nil,
-		connected:  false,
 		timeout:    timeout,
 	}, nil
 }
@@ -62,23 +54,6 @@ func (i *IRC) Connect() error {
 	p := parser{i: i, outLock: &sync.Mutex{}}
 
 	i.readChan = readLoop(i.connection, &p)
-
-	if i.ServerPass != "" {
-		if err = i.Write(passMsg(i.ServerPass)); err != nil {
-			fmt.Fprintln(i.Output, err)
-			return err
-		}
-	}
-
-	if err = i.Write(nickMsg(i.Nick)); err != nil {
-		fmt.Fprintln(i.Output, err)
-		return err
-	}
-
-	if err = i.Write(userMsg(i.User, i.User)); err != nil {
-		fmt.Fprintln(i.Output, err)
-		return err
-	}
 
 	return nil
 }

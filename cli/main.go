@@ -18,10 +18,7 @@ const (
 )
 
 var (
-	nick   = flag.String("nick", "", "Nickname")
-	user   = flag.String("user", "", "User full name")
 	server = flag.String("server", "", "Server address")
-	pass   = flag.String("pass", "", "Server password")
 	tls    = flag.Bool("tls", false, "Connect using tls")
 )
 
@@ -34,7 +31,7 @@ func main() {
 }
 
 func connect(w io.Writer, r io.Reader) {
-	ircc, err := irc.New(*nick, *user, *server, *pass, *tls, w, 10*time.Second)
+	ircc, err := irc.New(*server, *tls, w, 10*time.Second)
 	if err != nil {
 		fmt.Fprintln(w, events.ConnectionError(err.Error()))
 		os.Exit(1)
