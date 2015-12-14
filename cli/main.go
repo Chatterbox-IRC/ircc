@@ -8,9 +8,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/chatterbox-irc/chatterbox/ircc/events"
-	"github.com/chatterbox-irc/chatterbox/ircc/irc"
-	"github.com/chatterbox-irc/chatterbox/ircc/parser"
+	"github.com/chatterbox-irc/ircc/events"
+	"github.com/chatterbox-irc/ircc/irc"
+	"github.com/chatterbox-irc/ircc/parser"
 )
 
 const (

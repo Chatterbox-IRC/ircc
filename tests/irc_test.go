@@ -1,12 +1,9 @@
 package tests
 
 import (
-	"fmt"
-	"strings"
 	"testing"
-	"time"
 
-	"github.com/chatterbox-irc/chatterbox/ircc/mock"
+	"github.com/chatterbox-irc/ircc/mock"
 )
 
 func TestConnection(t *testing.T) {
@@ -18,18 +15,16 @@ func TestConnection(t *testing.T) {
 	}
 	defer ircd.Close()
 
-	err = ircc.WaitForConnection(5 * time.Second)
+	err = ircc.Connect()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expected := fmt.Sprintf(`{"type":"connection","status":"ok","msg":"%s"}`, ircc.Server)
-	actual := out.String()
+	ircc.User("test", "Doctor Who")
+	ircc.Nick("test")
 
-	if !strings.Contains(actual, expected) {
-		t.Errorf("Expected '%s' in '%s'", expected, actual)
+	err = mock.PollForEvent(`{"type":"connection","status":"ok","target":"hostname.domain.tld","msg":"Welcome to the ShadowNET Internet Relay Chat Network test"}`, out)
+	if err != nil {
+		t.Error(err)
 	}
-
-	ircc.Disconnect()
-	mock.PollForEvent(fmt.Sprintf(`{"type":"quit","status":"ok","msg":"%s"}`, ircc.Server), out)
 }

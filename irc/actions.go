@@ -6,6 +6,20 @@ import (
 	"github.com/chatterbox-irc/chatterbox/ircc/events"
 )
 
+// User sets user and real name.
+func (i IRC) User(user, name string) {
+	if err := i.Write(userMsg(user, name)); err != nil {
+		fmt.Fprint(i.Output, events.WriteError(err.Error()))
+	}
+}
+
+// Nick sets nickname.
+func (i IRC) Nick(nick string) {
+	if err := i.Write(nickMsg(nick)); err != nil {
+		fmt.Fprint(i.Output, events.WriteError(err.Error()))
+	}
+}
+
 // Join an IRC channel.
 func (i IRC) Join(channel, password string) {
 	if err := i.Write(joinMsg(channel, password)); err != nil {

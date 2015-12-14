@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chatterbox-irc/chatterbox/ircc/irc"
+	"github.com/chatterbox-irc/ircc/irc"
 )
 
 var (
@@ -47,7 +47,7 @@ func New() (*bytes.Buffer, *irc.IRC, *IRCD, error) {
 	// Need to wait for the ircd to startup. Otherwise we get connection errors.
 	time.Sleep(50 * time.Millisecond)
 
-	ircc, err := irc.New("cbx", "test", "localhost:"+p, "", false, &reader)
+	ircc, err := irc.New("localhost:"+p, false, &reader, 10*time.Second)
 
 	if err != nil {
 		return nil, nil, nil, err
@@ -62,17 +62,16 @@ func New() (*bytes.Buffer, *irc.IRC, *IRCD, error) {
 func PollForEvent(event string, out *bytes.Buffer) error {
 	start := time.Now()
 	timeout := 2 * time.Second
-	recieved := ""
 
 	for {
-		recieved += out.String()
+		output := out.String()
 
-		if strings.Contains(recieved, event) {
+		if strings.Contains(output, event) {
 			return nil
 		}
 
 		if time.Since(start) > timeout {
-			return fmt.Errorf("Expected '%s' in '%s'", event, recieved)
+			return fmt.Errorf("Expected '%s' in '%s'", event, output)
 		}
 	}
 }

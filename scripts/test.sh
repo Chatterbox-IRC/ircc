@@ -1,4 +1,3 @@
 #!/usr/bin/env bash
 
-# TODO: add -race support
-go test --cover $(go list ./... | grep -v /vendor/)
+go test --race --cover github.com/chatterbox-irc/ircc/tests

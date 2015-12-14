@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/chatterbox-irc/chatterbox/pkg/validate"
+	"github.com/chatterbox-irc/pkg/validate"
 )
 
 // ConnectionError returns a connection error string.
@@ -66,4 +66,15 @@ func InvalidMsgError() string {
 // so it can't throw a error.
 func InternalError(msg string) string {
 	return fmt.Sprintf(`{"type":"error","msg":"%s"}`, msg)
+}
+
+// ServerError returns an error message from and IRC server
+func ServerError(msg string) string {
+	event, err := json.Marshal(StatusMsgEvent{Type: "server", Status: "error", Msg: msg})
+
+	if err != nil {
+		return InternalError(err.Error())
+	}
+
+	return string(event)
 }

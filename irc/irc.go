@@ -9,8 +9,13 @@ import (
 	"time"
 )
 
-// ErrInvalidConnection is thrown when somebody attempts to create an invalid connection.
-var ErrInvalidConnection = errors.New("nick, user, and server must be set")
+var (
+	// ErrInvalidServerURL is thrown when somebody attempts to create an irc object without a server.
+	ErrInvalidServerURL = errors.New("server must be set")
+
+	// ErrNilConnection is thrown when somebody writes to an unitilized connection
+	ErrNilConnection = errors.New("You must Connect() before writing to an irc connection")
+)
 
 // IRC is a object holding irc connection information
 type IRC struct {
@@ -18,20 +23,21 @@ type IRC struct {
 	Server     string
 	Output     io.Writer
 	connection net.Conn
+	Connected  bool
 	timeout    time.Duration
-	readChan   chan bool
 }
 
 // New creates a new irc connection
 func New(server string, useTLS bool, output io.Writer, timeout time.Duration) (*IRC, error) {
 	if server == "" {
-		return nil, ErrInvalidConnection
+		return nil, ErrInvalidServerURL
 	}
 
 	return &IRC{
 		UseTLS:     useTLS,
 		Server:     server,
 		Output:     output,
+		Connected:  false,
 		connection: nil,
 		timeout:    timeout,
 	}, nil
@@ -39,6 +45,9 @@ func New(server string, useTLS bool, output io.Writer, timeout time.Duration) (*
 
 // Write writes a message to the irc server.
 func (i *IRC) Write(msg string) error {
+	if i.connection == nil {
+		return ErrNilConnection
+	}
 	return writeCon(i.connection, []byte(msg+"\r\n"), i.timeout)
 }
 
@@ -53,15 +62,20 @@ func (i *IRC) Connect() error {
 
 	p := parser{i: i, outLock: &sync.Mutex{}}
 
-	i.readChan = readLoop(i.connection, &p)
+	readLoop(i.connection, &p)
+	i.Connected = true
 
 	return nil
 }
 
-// Disconnect disconnects from server and cleans up
-func (i *IRC) Disconnect() {
-	i.Quit()
-	time.Sleep(time.Second) // TODO: Wait for quit event
-	i.readChan <- true
-	<-i.readChan
+// closeConnection closes connection to server
+func (i *IRC) closeConnection() error {
+	return i.connection.Close()
+}
+
+// disconnect disconnects from server and cleans up
+func (i *IRC) disconnect() {
+	// Make sure connection is closed, we don't care if this errors
+	i.closeConnection()
+	i.connection = nil
 }

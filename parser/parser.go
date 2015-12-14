@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"time"
 
-	"github.com/chatterbox-irc/chatterbox/ircc/events"
-	"github.com/chatterbox-irc/chatterbox/ircc/irc"
+	"github.com/chatterbox-irc/ircc/events"
+	"github.com/chatterbox-irc/ircc/irc"
 	"github.com/chatterbox-irc/pkg/validate"
 )
 
@@ -26,8 +27,12 @@ func Parse(ircc *irc.IRC, w io.Writer, input string) int {
 	}
 
 	switch cmd["type"].(string) {
-	case "exit":
-		return exit(ircc, w)
+	case "quit":
+		return quit(ircc, w)
+	case "user":
+		return user(ircc, w, input)
+	case "nick":
+		return nick(ircc, w, input)
 	case "join":
 		return join(ircc, w, input)
 	case "part":
@@ -40,9 +45,63 @@ func Parse(ircc *irc.IRC, w io.Writer, input string) int {
 	}
 }
 
-func exit(ircc *irc.IRC, w io.Writer) int {
-	ircc.Disconnect()
-	return 0
+func quit(ircc *irc.IRC, w io.Writer) int {
+	ircc.Quit()
+	start := time.Now()
+	timeout := 2 * time.Second
+
+	for {
+
+		if ircc.Connected == false {
+			return 0
+		}
+
+		if time.Since(start) > timeout {
+			fmt.Fprintln(w, events.ConnectionError("unable to disconnect"))
+			return 1
+		}
+	}
+}
+
+func user(ircc *irc.IRC, w io.Writer, input string) int {
+	cmd := events.User{}
+
+	if err := json.Unmarshal([]byte(input), &cmd); err != nil {
+		fmt.Fprint(w, events.JSONError(err.Error()))
+		return -1 // Not a critical error.
+	}
+
+	e := []validate.ValidationMsg{}
+	e = append(e, validate.NotNil("user", cmd.User)...)
+	e = append(e, validate.NotNil("name", cmd.Name)...)
+
+	if len(e) > 0 {
+		fmt.Fprint(w, events.ValidationError("user", e))
+		return -1 // Not a critical error.
+	}
+
+	ircc.User(cmd.User, cmd.Name)
+	return -1
+}
+
+func nick(ircc *irc.IRC, w io.Writer, input string) int {
+	cmd := events.Nick{}
+
+	if err := json.Unmarshal([]byte(input), &cmd); err != nil {
+		fmt.Fprint(w, events.JSONError(err.Error()))
+		return -1 // Not a critical error.
+	}
+
+	e := []validate.ValidationMsg{}
+	e = append(e, validate.NotNil("nick", cmd.Nick)...)
+
+	if len(e) > 0 {
+		fmt.Fprint(w, events.ValidationError("nick", e))
+		return -1 // Not a critical error.
+	}
+
+	ircc.Nick(cmd.Nick)
+	return -1
 }
 
 func join(ircc *irc.IRC, w io.Writer, input string) int {

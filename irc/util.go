@@ -21,7 +21,6 @@ func dial(address string, useTLS bool, timeout time.Duration) (net.Conn, error) 
 }
 
 func writeCon(con net.Conn, msg []byte, timeout time.Duration) error {
-	fmt.Println(string(msg))
 	err := con.SetWriteDeadline(time.Now().Add(timeout))
 	if err != nil {
 		return err
@@ -40,29 +39,23 @@ func writeCon(con net.Conn, msg []byte, timeout time.Duration) error {
 	return nil
 }
 
-func readLoop(con net.Conn, out io.Writer) chan bool {
-
-	quit := make(chan bool)
-
+func readLoop(con net.Conn, out io.Writer) {
 	go func() {
 		for {
-			select {
-			default:
-				data := make([]byte, 512)
-				_, err := con.Read(data)
+			data := make([]byte, 512)
+			_, err := con.Read(data)
 
-				if err != nil {
-					fmt.Print("error: ")
-					fmt.Println(err)
+			if err != nil {
+				// If connection is closed, quit
+				if err == io.EOF {
+					fmt.Fprintln(out, `{"type":"server","status":"error","msg":"closed"}`)
+					return
 				}
-
-				fmt.Fprint(out, string(data))
-			case <-quit:
-				close(quit)
-				return
+				fmt.Print("error: ")
+				fmt.Println(err)
 			}
+
+			fmt.Fprint(out, string(data))
 		}
 	}()
-
-	return quit
 }
