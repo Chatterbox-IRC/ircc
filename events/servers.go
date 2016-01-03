@@ -23,7 +23,7 @@ type Quit struct {
 
 // Connected returns a connection event
 func Connected(server, msg string) string {
-	event, err := json.Marshal(StatusTargetMsgEvent{Type: "connection",
+	event, err := json.Marshal(StatusTargetMsgEvent{Type: "connected",
 		Status: "ok",
 		Target: server,
 		Msg:    msg,
